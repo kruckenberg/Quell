@@ -1,13 +1,14 @@
 const express = require('express');
 const path = require('path');
 const schema = require('./schema/schema');
-const {graphqlHTTP} = require('express-graphql')
-// const { quell } = require('./controllers/quellController');
 const QuellCache = require('@quell/server');
-const app = express();
-// const PORT = process.env.PORT || 3000;
-const PORT = 3000;
 
+// create Express server
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+
+// instantiate QuellCache GraphQL middleware
 const quellCache = new QuellCache(schema, 6379, 600);
 
 
@@ -26,22 +27,11 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// just putting this here for access to the graphiql playground
-app.use('/g', graphqlHTTP({
-  schema: schema,
-  graphiql: true
-}));
-
-
 // route that triggers the flushall function to clear the Redis cache
 app.get('/clearCache', quellCache.clearCache, (req, res) => {
   return res.status(200).send('Redis cache successfully cleared');
 })
 
-// GraphQL route
-// app.use('/graphql', quell(schema), (req, res) => {
-//   res.status(200).send(res.locals.value);
-// });
 app.use('/graphql', 
   quellCache.query,
   (req, res) => {
