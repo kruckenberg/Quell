@@ -4,7 +4,7 @@ import DemoButton from '../components/DemoButton';
 import QueryResults from '../components/QueryResults';
 import Metrics from '../components/Metrics';
 import Graph from '../components/Graph';
-import Quell from '../../../../quell-client/Quellify';
+import Quell from '@quell/client';
 import { CreateQueryStr } from '../helper-functions/HelperFunctions.js';
 import Header from '../images/headers/QUELL-headers-demo w lines.svg';
 
