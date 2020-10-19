@@ -1,21 +1,20 @@
 const express = require('express');
 const path = require('path');
 const schema = require('./schema/schema');
-const QuellCache = require('@quell/server');
+const graphqlNodeModule = (process.env.NODE_ENV === 'development') ? '../../quell-server/src/quell' : '@quell/server';
+const QuellCache = require(graphqlNodeModule)
 
-// create Express server
+// Express instance
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-
-// instantiate QuellCache GraphQL middleware
-const quellCache = new QuellCache(schema, 6379, 600);
-
+// Instantiate cache GraphQL middleware
+const redisPort = (process.env.NODE_ENV === 'production') ? process.env.REDIS_URL : 6379;
+const quellCache = new QuellCache(schema, redisPort, 600);
 
 // JSON parser:
 app.use(express.json());
 
-// Webpack DevServer
 if (process.env.NODE_ENV === 'production') {
   // statically serve everything in the dist folder on the route
   app.use('/dist', express.static(path.resolve(__dirname, '../dist')));
@@ -27,11 +26,12 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// route that triggers the flushall function to clear the Redis cache
+// Route that triggers the flushall function to clear the Redis cache
 app.get('/clearCache', quellCache.clearCache, (req, res) => {
   return res.status(200).send('Redis cache successfully cleared');
 })
 
+// GraphQL route
 app.use('/graphql', 
   quellCache.query,
   (req, res) => {
@@ -40,12 +40,12 @@ app.use('/graphql',
       .send(res.locals.queryResponse);
   });
 
-// catch-all endpoint handler
+// Catch-all endpoint handler
 app.use((req, res) => {
   return res.status(400).send('Page not found.');
 });
 
-// global error handler
+// Global error handler
 app.use((err, req, res, next) => {
   const defaultErr = {
     log: 'Express error handler caught unknown middleware error!',
